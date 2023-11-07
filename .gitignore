@@ -1,4 +1,42 @@
-
+# All the images
 *.icloud
 *.icloud
 *.jpg
+*logo/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs and debugging output
+*.log
+*.seed
+
+# Dependency and build directories
+dist/
+build/
+
+# Environment-specific files
+.env
+.env.local
+.env.*.local
+
+# Editor/IDE-specific files
+.vscode/
+
+# Compiled code or binary files
+*.pyc
+*.class
+*.war
+*.jar
+
+# Personal configuration files
+.gitconfig.local
+.gitconfig.user
+
+# Jupyter and Conda specific files
+.ipynb_checkpoints/
+env/
+.conda/
+.local/share/jupyter/kernels
