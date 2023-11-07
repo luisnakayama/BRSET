@@ -3,6 +3,7 @@
 *.icloud
 *.jpg
 *logo/
+Embeddings/*
 
 # macOS system files
 .DS_Store

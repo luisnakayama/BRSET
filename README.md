@@ -30,7 +30,7 @@ To use the BRSET dataset and perform technical validation, data analysis, qualit
 
 1. Clone this repository to your local machine:
 ```
-git clone https://github.com/your-username/brset.git
+git clone https://github.com/luisnakayama/BRSET.git
 ```
 
 2. Set up your Python environment and install the required libraries by running:
@@ -43,13 +43,38 @@ pip install -r requirements.txt
 3. Explore the dataset and access the data for your analysis.
 
 ## Data Analysis
-Use the BRSET dataset for data analysis to gain insights into the ophthalmological data. You can perform various exploratory data analysis (EDA) tasks, such as statistical summaries, data visualization, and understanding the distribution of various attributes.
+The data analysis for the BRSET can be found in the `eda.ipynb` notebook. It includes exploratory data analysis, plots, distributions, and an overview of the dataset. Feel free to use this notebook as a starting point for your own analysis.
 
 ## Quality Assessment
-Conduct a quality assessment of the dataset to identify any anomalies, inconsistencies, or errors in the data. Quality assessment is crucial for ensuring the reliability and accuracy of the dataset before building models.
+The quality assessment for the BRSET can be found in the `eda.ipynb` notebook. This section covers aspects such as missing values, data quality assessment, and the identification of duplicates. You can also generate a profiling report in the `Profile/brset_profiling.html` file for further insights into the data quality.
 
 ## Modeling
-Leverage the BRSET dataset to develop and train machine learning or deep learning models for ophthalmological tasks. You can use the labeled retinal images and associated demographic information to train and evaluate your models.
+To build and evaluate models using the BRSET dataset, we provide a step-by-step guide in the `modeling.ipynb` and `modeling_embeddings.ipynb` notebook. These notebook demonstrates how to load the dataset, preprocess the images and labels, and train machine learning models for various tasks related to ophthalmology research.
+
+### Pre-trained Embeddings
+To facilitate the use and reduce computational costs, we offer pre-trained embeddings extracted from various backbone models. These embeddings can be extracted and used in ml tasks using the `modeling_embeddings.ipynb` file. You can find embeddings for the following backbone models:
+
+- 'dinov2_small'
+- 'dinov2_base'
+- 'dinov2_large'
+- 'dinov2_giant'
+- 'clip_base'
+- 'clip_large'
+- 'convnextv2_tiny'
+- 'convnextv2_base'
+- 'convnextv2_large'
+- 'convnext_tiny'
+- 'convnext_small'
+- 'convnext_base'
+- 'convnext_large'
+- 'swin_tiny'
+- 'swin_small'
+- 'swin_base'
+- 'vit_base'
+- 'vit_large'
+
+These pre-trained embeddings can be utilized in your machine learning models to expedite the development and reduce computational overhead.
+
 
 ## Citation
 If you use the BRSET dataset in your research, please cite the following publication:
