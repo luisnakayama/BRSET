@@ -4,6 +4,7 @@
 *.jpg
 *logo/
 Embeddings/*
+Models/*
 
 # macOS system files
 .DS_Store

@@ -143,7 +143,7 @@ class CustomLabeledImageDataset(Dataset):
         self.transform = transform or transforms.Compose([
             transforms.Resize(self.shape),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            #transforms.Normalize(),
         ])
         self.label_col = label_col
 
@@ -160,7 +160,7 @@ class CustomLabeledImageDataset(Dataset):
         Returns:
         tuple: A tuple containing the preprocessed image as a PyTorch tensor and its associated label.
         """
-        img_name = self.dataframe['image_id'].iloc[idx]
+        img_name = self.dataframe['image_id'].iloc[idx] + ('.jpg')
         img_path = os.path.join(self.folder_path, img_name)
         img = Image.open(img_path).convert("RGB")
         img = self.transform(img)

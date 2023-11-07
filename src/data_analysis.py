@@ -3,6 +3,8 @@ from src.get_dataset import get_dataset
 import os
 import pandas as pd
 import numpy as np
+from torchvision import transforms
+from PIL import Image
 
 import missingno as msno
 import matplotlib.pyplot as plt
@@ -484,3 +486,33 @@ def plot_image_statistics(image_stats_df):
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
+
+
+# Define the path to the image folder
+def calculate_normalization_values(image_folder):
+    # Initialize empty lists to store pixel values
+    mean_values = [0, 0, 0]
+    std_values = [0, 0, 0]
+
+    # Create a transform to convert images to tensors
+    transform = transforms.ToTensor()
+
+    # Iterate through the images in the folder and accumulate pixel values
+    image_paths = [os.path.join(image_folder, filename) for filename in os.listdir(image_folder)]
+
+    for image_path in image_paths:
+        if not(image_path.endswith('.jpg')):
+            continue
+        image = Image.open(image_path).convert('RGB')
+        image_tensor = transform(image)
+        for i in range(3):  # Channels (R, G, B)
+            mean_values[i] += image_tensor[i, :, :].mean().item()
+            std_values[i] += image_tensor[i, :, :].std().item()
+
+    # Calculate the mean and standard deviation
+    num_images = len(image_paths)
+    mean_values = [m / num_images for m in mean_values]
+    std_values = [s / num_images for s in std_values]
+
+    print("Mean values (R, G, B):", mean_values)
+    print("Standard deviation (R, G, B):", std_values)

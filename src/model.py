@@ -280,16 +280,33 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
 
         # Define the backbone
         self.backbone = backbone
+        
+        output_dim = self.calculate_backbone_out()
 
         # Create a classifier on top of the backbone
-        self.classifier = nn.Linear(backbone.output_dim, num_classes)
-
+        if num_classes > 2:
+            self.classifier = nn.Linear(output_dim, num_classes)
+        else:
+            self.classifier = nn.Linear(output_dim, 1)
+            
         # Set the mode
         self.mode = mode
         if mode == 'eval':
             self.eval()
+            self.backbone.eval()
         elif mode == 'fine_tune':
             self.train()
+            self.backbone.train()
+            
+    def calculate_backbone_out(self):
+        sample_input = torch.randn(1, 3, 224, 224)
+        
+        self.backbone.eval()
+        # Forward pass the sample input through the model
+        with torch.no_grad():
+            output = self.backbone(sample_input)
+        return output.shape[1]
+        
 
     def forward(self, x):
         """

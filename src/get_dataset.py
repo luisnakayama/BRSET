@@ -3,6 +3,10 @@ import os
 import getpass
 import shutil
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.utils import resample
+import matplotlib.pyplot as plt
+import numpy as np
 
 def organize_dataset(output_dir):
     """
@@ -136,3 +140,82 @@ def get_dataset(data_dir, download=False, info=False):
 if __name__ == "__main__":
     data_dir = "data/"
     get_dataset(data_dir, download=True)
+
+    
+
+def train_test_split_and_balance(df, target_column='diabetic_retinopathy', test_size=0.2, random_state=42, undersample=True):
+    """
+    Splits a dataframe into training and testing sets, and optionally balances the dataset through undersampling.
+
+    Parameters:
+    - df (pandas DataFrame): The input dataframe containing the dataset to be split and balanced.
+    - target_column (str): The name of the target column for classification (default is 'diabetic_retinopathy').
+    - test_size (float): The proportion of the dataset to include in the test split (default is 0.2).
+    - random_state (int): Seed for random number generation to ensure reproducibility (default is 42).
+    - undersample (bool): Whether to balance the dataset using undersampling (default is True).
+
+    Returns:
+    - train_data (pandas DataFrame): The training dataset after splitting and optional undersampling.
+    - test_data (pandas DataFrame): The testing dataset after splitting.
+    
+    If the 'undersample' parameter is set to True, the function will balance the training dataset by downsampling
+    the majority class to have the same number of samples as the minority class. The train and test datasets are
+    returned as pandas DataFrames.
+
+    Example Usage:
+    X_train, X_test, y_train, y_test = train_test_split_and_balance(your_dataframe)
+
+    Note:
+    - Ensure that your dataframe contains the specified 'target_column' as the binary classification label.
+    - The function will display label distribution plots for the train and test datasets.
+    """
+    # Separate features (X) and target variable (y)
+    X = df.drop(columns=[target_column])
+    y = df[target_column]
+    
+    # Perform train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
+    
+    # Combine X_train and y_train for undersampling
+    train_data = pd.concat([X_train, y_train], axis=1)
+    
+    # Combine X_test and y_test
+    test_data = pd.concat([X_test, y_test], axis=1)
+    
+    if undersample:
+        
+        # Determine the class with the fewest samples
+        min_class_count = train_data[target_column].value_counts().min()
+        
+        # Downsample the majority classes to balance the dataset
+        downsampled_classes = []
+        for class_label in train_data[target_column].unique():
+            class_data = train_data[train_data[target_column] == class_label]
+            downsampled_class = resample(class_data, replace=False, n_samples=min_class_count, random_state=random_state)
+            downsampled_classes.append(downsampled_class)
+        
+        # Combine the downsampled classes
+        train_data = pd.concat(downsampled_classes)
+        
+        
+    # Plot label distribution in train and test
+    plt.figure(figsize=(10, 5))
+    plt.subplot(1, 2, 1)
+    plt.title("Train Label Distribution")
+    train_data[target_column].value_counts().plot(kind='bar')
+    plt.xlabel("Class")
+    plt.ylabel("Count")
+    plt.xticks(np.arange(2))
+
+    plt.subplot(1, 2, 2)
+    plt.title("Test Label Distribution")
+    test_data[target_column].value_counts().plot(kind='bar')
+    plt.xlabel("Class")
+    plt.ylabel("Count")
+    plt.xticks(np.arange(2))
+    
+    train_data = train_data.sample(frac=1).reset_index(drop=True)
+    test_data = test_data.sample(frac=1).reset_index(drop=True)
+        
+    
+    return train_data, test_data
