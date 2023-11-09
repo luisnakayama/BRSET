@@ -267,7 +267,7 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
 
     For more information on specific foundational CV models, refer to their respective documentation.
     """
-    def __init__(self, backbone, num_classes, mode='eval'):
+    def __init__(self, backbone, hidden, num_classes, mode='eval', backbone_mode='eval'):
         """
         Initialize the FoundationalCVModelWithClassifier module.
 
@@ -280,23 +280,51 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
 
         # Define the backbone
         self.backbone = backbone
+        self.hidden = hidden
         
         output_dim = self.calculate_backbone_out()
+        
+        # Initialize layers as an empty list
+        layers = []
+        
+        # Add the linear layer and ReLU activation if 'hidden' is an integer
+        if isinstance(hidden, int):
+            layers.append(nn.Linear(output_dim, hidden))
+            layers.append(nn.ReLU())
+            output_dim = hidden
+            
+        # Add the linear layer and ReLU activation for each element in 'hidden' if it's a list
+        elif isinstance(hidden, list):
+            for h in hidden:
+                layers.append(nn.Linear(output_dim, h))
+                layers.append(nn.ReLU())
+                output_dim = h
+        
+        if hidden:
+            self.hidden_layers = nn.Sequential(*layers)
+        
 
         # Create a classifier on top of the backbone
         if num_classes > 2:
             self.classifier = nn.Linear(output_dim, num_classes)
+            self.activation_f = nn.Softmax()
         else:
             self.classifier = nn.Linear(output_dim, 1)
+            self.activation_f = nn.Sigmoid()
             
         # Set the mode
         self.mode = mode
+        self.backbone_mode = backbone_mode
+        
+        if backbone_mode == 'eval':
+            self.backbone.eval()
+        elif backbone_mode == 'fine_tune':
+            self.backbone.train()
+            
         if mode == 'eval':
             self.eval()
-            self.backbone.eval()
         elif mode == 'fine_tune':
             self.train()
-            self.backbone.train()
             
     def calculate_backbone_out(self):
         sample_input = torch.randn(1, 3, 224, 224)
@@ -320,8 +348,15 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
         """
         # Pass the input through the backbone
         features = self.backbone(x)
+        
+        if self.hidden:
+            features = self.hidden_layers(features)
 
         # Apply the classifier to obtain class predictions
         predictions = self.classifier(features)
+        
+        # Get the probabilities
+        probabilities = self.activation_f(predictions)
 
-        return predictions
+        return probabilities
+    

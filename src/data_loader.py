@@ -59,7 +59,6 @@ class ImageFolderDataset(Dataset):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-
     def __len__(self):
         return len(self.image_files)
 
@@ -143,7 +142,7 @@ class CustomLabeledImageDataset(Dataset):
         self.transform = transform or transforms.Compose([
             transforms.Resize(self.shape),
             transforms.ToTensor(),
-            #transforms.Normalize(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
         self.label_col = label_col
 
