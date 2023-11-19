@@ -81,4 +81,4 @@ If you use the BRSET dataset in your research, please cite the following publica
 
 **Physionet:** *Nakayama, L. F., Goncalves, M., Zago Ribeiro, L., Santos, H., Ferraz, D., Malerbi, F., Celi, L. A., & Regatieri, C. (2023). A Brazilian Multilabel Ophthalmological Dataset (BRSET) (version 1.0.0). PhysioNet. https://doi.org/10.13026/xcxw-8198.*
 
-For more information about the BRSET dataset, please refer to the (PhysioNet link)[https://physionet.org/content/brazilian-ophthalmological/1.0.0/].
+For more information about the BRSET dataset, please refer to the [PhysioNet link](https://physionet.org/content/brazilian-ophthalmological/1.0.0/).

@@ -59,12 +59,15 @@ def show_missing(df):
     plt.ylabel('Percentage Missing')
     plt.xticks(rotation=90)
     plt.tight_layout()
+    
+    os.makedirs('Profile', exist_ok=True)
+    plt.savefig('Profile/Missing values')
     plt.show()
     
 
 
 # Categorical Data:
-def plot_categorical_column(df, column):
+def plot_categorical_column(df, column, save=False):
     """
     Generate pie charts and bar plots to visualize categorical columns in a Pandas DataFrame.
 
@@ -90,34 +93,44 @@ def plot_categorical_column(df, column):
     None
     """
     
+    
     values = df[column].value_counts()
 
     print(df[column].value_counts(normalize=True))
     print('')
+    
+    if column == 'patient_sex':
+        column = 'Patient Sex'
 
     # Plot a pie chart with improved quality
     plt.figure(figsize=(10, 5))
+    
     plt.subplot(121, aspect='equal')
     explode = [0.1] * len(values)  # Explode a slice for emphasis
     colors = plt.cm.Paired(range(len(values)))
 
     plt.pie(values, labels=values.index, autopct='%1.1f%%', startangle=140, 
             pctdistance=0.85, explode=explode, colors=colors)
-    plt.title(f'Pie Chart for {column}')
+    plt.title(f'Distribution of Column {column}')
     plt.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
     # Plot a bar chart with improved quality
     plt.subplot(122)
     values.plot(kind='bar', color='skyblue')
-    plt.title(f'Bar Plot for {column}')
+    plt.title(f'Distribution of Column {column}')
     plt.xlabel(column)
     plt.ylabel('Count')
     plt.xticks(rotation=45, ha='right')
 
     plt.tight_layout()
+    plt.subplots_adjust(wspace=0.5)
+    if save:
+        os.makedirs('Profile', exist_ok=True)
+        plt.savefig(f'Profile/Plots {column}')
+    
     plt.show()
 
-def plot_categorical_columns(df, n=10, categorical_columns=None):
+def plot_categorical_columns(df, n=10, categorical_columns=None, save=False):
     """    
     Generate pie charts and bar plots to visualize categorical columns in a Pandas DataFrame.
 
@@ -153,7 +166,7 @@ def plot_categorical_columns(df, n=10, categorical_columns=None):
         print('#'*40, f' {column} ', '#'*40)
         print('#'*90)
         
-        plot_categorical_column(df, column)
+        plot_categorical_column(df, column, save=save)
         
 ## Numeric data
 def plot_continuous(df, column):
@@ -220,7 +233,7 @@ def plot_continuous(df, column):
 
 ### Images:
 
-def show_random_images(dataset_dir, image_folder, id_column, class_column, max_images_per_class):
+def show_random_images(dataset_dir, image_folder, id_column, class_column, max_images_per_class, save=True):
     """
     Display random images from a dataset with their corresponding class labels.
 
@@ -279,9 +292,18 @@ def show_random_images(dataset_dir, image_folder, id_column, class_column, max_i
         file_name = os.path.basename(image_path)
         ax.imshow(img)
         ax.axis('off')
-        ax.set_title(f'{class_value} - {file_name}')
+        ax.set_title(f'Diagnosis: {class_value}')
 
     plt.tight_layout()
+    if class_column == 'diabetic_retinopathy':
+        column = 'Diabetic Retinopathy'
+    else:
+        column = class_column
+    plt.suptitle(f'Sample Images with Class Labels for {column}', fontsize=16)
+    
+    if save:
+        os.makedirs('Profile', exist_ok=True)
+        plt.savefig(f'Profile/Sample images {column}')
     plt.show()
 
 

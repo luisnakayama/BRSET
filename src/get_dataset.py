@@ -183,10 +183,9 @@ def train_test_split_and_balance(df, target_column='diabetic_retinopathy', test_
     test_data = pd.concat([X_test, y_test], axis=1)
     
     if undersample:
-        
+        ### Train:
         # Determine the class with the fewest samples
         min_class_count = train_data[target_column].value_counts().min()
-        
         # Downsample the majority classes to balance the dataset
         downsampled_classes = []
         for class_label in train_data[target_column].unique():
@@ -196,6 +195,19 @@ def train_test_split_and_balance(df, target_column='diabetic_retinopathy', test_
         
         # Combine the downsampled classes
         train_data = pd.concat(downsampled_classes)
+        
+        ### Test:
+        # Determine the class with the fewest samples
+        min_class_count = test_data[target_column].value_counts().min()
+        # Downsample the majority classes to balance the dataset
+        downsampled_classes = []
+        for class_label in test_data[target_column].unique():
+            class_data = test_data[test_data[target_column] == class_label]
+            downsampled_class = resample(class_data, replace=False, n_samples=min_class_count, random_state=random_state)
+            downsampled_classes.append(downsampled_class)
+        
+        # Combine the downsampled classes
+        test_data = pd.concat(downsampled_classes)
         
         
     # Plot label distribution in train and test
