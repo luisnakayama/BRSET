@@ -291,6 +291,8 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
         if isinstance(hidden, int):
             layers.append(nn.Linear(output_dim, hidden))
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(p=0.2))
+            layers.append(nn.BatchNorm1d(hidden))
             output_dim = hidden
             
         # Add the linear layer and ReLU activation for each element in 'hidden' if it's a list
@@ -298,11 +300,14 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
             for h in hidden:
                 layers.append(nn.Linear(output_dim, h))
                 layers.append(nn.ReLU())
+                layers.append(nn.Dropout(p=0.2))
+                layers.append(nn.BatchNorm1d(h))
                 output_dim = h
         
         if hidden:
             self.hidden_layers = nn.Sequential(*layers)
-        
+        else:
+            self.norm = nn.BatchNorm1d(output_dim)
 
         # Create a classifier on top of the backbone
         if num_classes > 2:
@@ -351,6 +356,8 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
         
         if self.hidden:
             features = self.hidden_layers(features)
+        else:
+            features = self.norm(features)
 
         # Apply the classifier to obtain class predictions
         predictions = self.classifier(features)
