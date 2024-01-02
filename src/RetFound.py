@@ -166,13 +166,13 @@ def get_retfound(weights=None, num_classes=3, backbone=False):
         if download_weights in ['y', 'Y', 'yes', 'Yes', 'YES']:
             # download RETFound weights
             output_file = 'Weights/RETFound_cfp_weights.pth'
-            file_id = '1l62zbWUFTlp214SvK6eMwPQZAzcwoeBE'
-            file_url = 'https://drive.google.com/uc?id={file_id}'
+            file_url = 'https://drive.google.com/uc?id=1l62zbWUFTlp214SvK6eMwPQZAzcwoeBE'
             # Create the output directory if it doesn't exist
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
             # Download the file from the Google Drive link
             gdown.download(file_url, output_file, quiet=False)
             print(f"File '{output_file}' downloaded successfully.")
+            weights = output_file
         else:
             print("Please provide the path to the pretrained weights file.")
             return

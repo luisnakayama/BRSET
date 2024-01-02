@@ -64,10 +64,10 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epo
         all_preds = []
         all_labels = []
         with torch.no_grad():
-            for batch in tqdm(val_dataloader,total=num_val_batches):
+            for val_batch in tqdm(val_dataloader,total=num_val_batches):
                 # Move inputs and labels to the GPU if available
-                val_inputs = batch['image'].to(device)
-                val_labels = batch['labels'].to(device)
+                val_inputs = val_batch['image'].to(device)
+                val_labels = val_batch['labels'].to(device)
 
                 # Calculate the outputs
                 val_outputs = model(val_inputs)
@@ -75,18 +75,18 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epo
                 if binary:
                     val_loss += criterion(val_outputs, val_labels.float()).item()
                 else:
-                    val_loss += criterion(val_outputs, torch.argmax(labels, dim=1)).item()
+                    val_loss += criterion(val_outputs, torch.argmax(val_labels, dim=1)).item()
 
                 val_accuracy += (val_outputs.round() == val_labels).float().mean().item()
                 
-                preds = torch.argmax(outputs, dim=1)
+                preds = torch.argmax(val_outputs, dim=1)
                 all_preds.extend(preds.cpu().numpy())
-                all_labels.extend(torch.argmax(labels, dim=1).cpu().numpy())
+                all_labels.extend(torch.argmax(val_labels, dim=1).cpu().numpy())
 
         val_loss /= num_val_batches
         val_accuracy /= num_val_batches
 
-        f1 = f1_score(all_labels, all_preds, average='micro')
+        f1 = f1_score(all_labels, all_preds, average='macro')
         f1_scores.append(f1)
 
         print(f'Epoch {epoch + 1}, Validation Loss: {val_loss}, F1 Score: {f1}')

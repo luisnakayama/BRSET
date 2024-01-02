@@ -156,7 +156,7 @@ def test(model, test_dataloader, saliency=True, device='cpu'):
                     if (output_size == 1):
                         eval_images_per_class[i] += [img for i, img in enumerate(image) if labels[i] == i]
                     else:
-                        eval_images_per_class[i] += [img for i, img in enumerate(image) if np.argmax(labels[i], axis=1) == i]
+                        eval_images_per_class[i] += [img for i, img in enumerate(image) if np.argmax(labels[i].cpu().numpy()) == i]
                     
         y_true, y_pred = np.array(y_true), np.array(y_pred)
         

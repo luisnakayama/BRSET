@@ -195,7 +195,7 @@ class FoundationalCVModel(torch.nn.Module):
             self.backbone = get_retfound(weights=weights, backbone=True)
 
         else:
-            raise ValueError(f"Unsupported backbone model: {self.model_name}")
+            raise ValueError(f"Unsupported backbone model: {backbone} \n Supported models: 'dinov2_small', 'dinov2_base', 'dinov2_large', 'dinov2_giant', 'convnextv2_tiny', 'convnextv2_base', 'convnextv2_large', 'convnext_tiny', 'convnext_small', 'convnext_base', 'convnext_large', 'swin_tiny', 'swin_small', 'swin_base', 'vit_base', 'vit_large', 'clip_base', 'clip_large', 'retfound'")
             
         # Set the model to evaluation or fine-tuning mode
         self.mode = mode
