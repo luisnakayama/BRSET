@@ -5,6 +5,8 @@ from transformers import CLIPModel
 import torch
 import torch.nn as nn
 import subprocess
+import os
+from .RetFound import get_retfound
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -91,13 +93,14 @@ class FoundationalCVModel(torch.nn.Module):
     For more information on specific models, refer to the respective model's documentation.
     """
     
-    def __init__(self, backbone, mode='eval'):
+    def __init__(self, backbone, mode='eval', weights=None):
         """
         Initialize the FoundationalCVModel module.
 
         Args:
         - backbone (str): The name of the foundational CV model to load.
         - mode (str, optional): The mode of the model, 'eval' for evaluation or 'fine_tune' for fine-tuning. Default is 'eval'.
+        - if model is retfound, weights is the path to the weights file
         """
         super(FoundationalCVModel, self).__init__()
         
@@ -188,6 +191,9 @@ class FoundationalCVModel(torch.nn.Module):
             # Get image part of CLIP model
             self.backbone = CLIPImageEmbeddings(clip_model.vision_model, clip_model.visual_projection)
         
+        elif backbone == 'retfound':
+            self.backbone = get_retfound(weights=weights, backbone=True)
+
         else:
             raise ValueError(f"Unsupported backbone model: {self.model_name}")
             
@@ -312,10 +318,10 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
         # Create a classifier on top of the backbone
         if num_classes > 2:
             self.classifier = nn.Linear(output_dim, num_classes)
-            self.activation_f = nn.Softmax()
+            #self.activation_f = nn.Softmax()
         else:
             self.classifier = nn.Linear(output_dim, 1)
-            self.activation_f = nn.Sigmoid()
+            #self.activation_f = nn.Sigmoid()
             
         # Set the mode
         self.mode = mode
@@ -360,10 +366,10 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
             features = self.norm(features)
 
         # Apply the classifier to obtain class predictions
-        predictions = self.classifier(features)
+        logits = self.classifier(features)
         
         # Get the probabilities
-        probabilities = self.activation_f(predictions)
+        # probabilities = self.activation_f(logits)
 
-        return probabilities
+        return logits
     

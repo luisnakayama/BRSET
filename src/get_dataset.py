@@ -136,12 +136,6 @@ def get_dataset(data_dir, download=False, info=False):
 
     return df
     
-        
-if __name__ == "__main__":
-    data_dir = "data/"
-    get_dataset(data_dir, download=True)
-
-    
 
 def train_test_split_and_balance(df, target_column='diabetic_retinopathy', test_size=0.2, random_state=42, undersample=True):
     """
@@ -231,3 +225,53 @@ def train_test_split_and_balance(df, target_column='diabetic_retinopathy', test_
         
     
     return train_data, test_data
+
+
+def plot_labels_distribution(df, column, title=None):
+    # Get value counts for the new categories
+    category_counts = df[column].value_counts()
+
+    # Plotting the value counts
+    category_counts.plot(kind='bar', rot=0, color='skyblue')
+    plt.xlabel(f'{column} Categories')
+    plt.ylabel('Count')
+    if title:
+        plt.title(title)
+    else:
+        plt.title(f'Distribution of {column} Categories')
+    plt.show()
+
+def split_data(df, column, split):
+    """
+    Split a DataFrame into training and testing sets while stratifying by a specified column.
+
+    Parameters:
+    - df: pandas DataFrame
+        The DataFrame to be split.
+    - column: str
+        The column used for stratification.
+    - split: float
+        The proportion of the dataset to include in the test split (0.0 to 1.0).
+
+    Returns:
+    - train_data: pandas DataFrame
+        Training set.
+    - test_data: pandas DataFrame
+        Testing set.
+    """
+    # Stratified split
+    train_data, test_data = train_test_split(df, test_size=split, stratify=df[column])
+
+    print(f"Train data shape: {train_data.shape}")
+    print(f"Test data shape: {test_data.shape}")
+
+    plot_labels_distribution(train_data, column, title='Train Label Distribution')
+    plot_labels_distribution(test_data, column, title='Test Label Distribution')
+
+
+    return train_data, test_data
+
+
+if __name__ == "__main__":
+    data_dir = "data/"
+    get_dataset(data_dir, download=True)

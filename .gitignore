@@ -5,6 +5,7 @@
 *logo/
 Embeddings/*
 Models/*
+Weights/*
 
 # macOS system files
 .DS_Store
