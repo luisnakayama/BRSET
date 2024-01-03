@@ -72,6 +72,7 @@ To facilitate the use and reduce computational costs, we offer pre-trained embed
 - 'swin_base'
 - 'vit_base'
 - 'vit_large'
+- 'retfound'
 
 These pre-trained embeddings can be utilized in your machine learning models to expedite the development and reduce computational overhead.
 
