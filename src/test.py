@@ -27,7 +27,7 @@ def get_saliency_map(model, input_image):
     #saliency_map = input_image.grad.data.abs().max(1)[0]
     return saliency_map
 
-def test_model(y_test, y_pred):
+def test_model(y_test, y_pred, y_prob=None):
     """
     Evaluates the model on the training and test data respectively
     1. Predictions on test data
@@ -77,13 +77,22 @@ def test_model(y_test, y_pred):
 
         #create ROC curve
         #plt.plot(fpr,tpr)
-        RocCurveDisplay.from_predictions(
-                y_test,
-                y_pred,
-                name=f"ROC curve",
-                color='aqua',
-                ax=ax,
-            )
+        if y_prob is not None:
+            RocCurveDisplay.from_predictions(
+                    y_test,
+                    y_prob,
+                    name=f"ROC curve",
+                    color='aqua',
+                    ax=ax,
+                )
+        else:
+            RocCurveDisplay.from_predictions(
+                    y_test,
+                    y_pred,
+                    name=f"ROC curve",
+                    color='aqua',
+                    ax=ax,
+                )
         plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
         plt.title('ROC Curve')
         plt.ylabel('True Positive Rate')
@@ -93,15 +102,24 @@ def test_model(y_test, y_pred):
     else:
         from itertools import cycle
         colors = cycle(["aqua", "darkorange", "cornflowerblue", "red", "green", "yellow", "purple", "pink", "brown", "black"])
-
-        for class_id, color in zip(range(len(label_binarizer.classes_)), colors):
-            RocCurveDisplay.from_predictions(
-                y_onehot_test[:, class_id],
-                y_onehot_pred[:, class_id],
-                name=f"ROC curve for {label_binarizer.classes_[class_id]}",
-                color=color,
-                ax=ax,
-            )
+        if y_prob is None:
+            for class_id, color in zip(range(len(label_binarizer.classes_)), colors):
+                RocCurveDisplay.from_predictions(
+                    y_onehot_test[:, class_id],
+                    y_onehot_pred[:, class_id],
+                    name=f"ROC curve for {label_binarizer.classes_[class_id]}",
+                    color=color,
+                    ax=ax,
+                )
+        else:
+            for class_id, color in zip(range(len(label_binarizer.classes_)), colors):
+                RocCurveDisplay.from_predictions(
+                    y_onehot_test[:, class_id],
+                    y_prob[:, class_id],
+                    name=f"ROC curve for {label_binarizer.classes_[class_id]}",
+                    color=color,
+                    ax=ax,
+                )
 
         plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
         plt.axis("square")
@@ -167,7 +185,7 @@ def test(model, test_dataloader, saliency=True, device='cpu'):
             # Convert the predicted class indices to one-hot encoding
             y_pred_one_hot = np.eye(y_pred.shape[1])[predicted_class_indices]
         
-        test_model(y_true, y_pred_one_hot)
+        test_model(y_true, y_pred_one_hot, y_pred)
     
     if saliency:
         
