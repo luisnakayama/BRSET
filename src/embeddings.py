@@ -152,7 +152,7 @@ def get_embeddings_df(batch_size=32, path="../BRSET/images/", backbone="dinov2",
     
 
 
-def load_data(labels_path='data/labels.csv', backbone='dinov2_large', label='diabetic_retinopathy', directory='Embeddings', normal=False):
+def load_data(labels_path='data/labels.csv', backbone='dinov2_large', label='diabetic_retinopathy', directory='Embeddings', dataset_name='BRSET', normal=False, DR_ICDR_3=True, extra_labels=None):
     """
     Load and prepare data for a machine learning task using image embeddings and corresponding labels.
 
@@ -186,12 +186,42 @@ def load_data(labels_path='data/labels.csv', backbone='dinov2_large', label='dia
     df = pd.read_csv(embeddings_path)
     df.rename(columns={'ImageName':'image_id'}, inplace=True)
     df['image_id'] = df['image_id'].apply(lambda x: x.replace('.jpg',''))
+    df['image_id'] = df['image_id'].apply(lambda x: x.replace('.JPG',''))
+    df['image_id'] = df['image_id'].apply(lambda x: x.replace('.png',''))
+    df['image_id'] = df['image_id'].apply(lambda x: x.replace('.jpeg',''))
     
-    # Labels
-    brset_df = pd.read_csv(labels_path)
+    if (label == 'DR_ICDR') and (dataset_name.lower() == 'eyepacs'):
+        label = 'level'
+    elif (label == 'DR_ICDR') and ('messidor' in dataset_name.lower()):
+        label = 'diagnosis'
     
-    if normal:
-        brset_df = brset_df[brset_df['DR_ICDR'] == 0]
+    if dataset_name == 'BRSET':
+        # Labels
+        brset_df = pd.read_csv(labels_path)
+        if normal:
+            brset_df = brset_df[brset_df['DR_ICDR'] == 0]
+
+        brset_df['patient_age'].fillna(brset_df['patient_age'].mean(), inplace=True)
+        # One-hot encode categorical variables:
+        brset_df = pd.get_dummies(brset_df, columns=['camera', 'optic_disc', 'diabetes'])
+            
+    elif ('messidor' in dataset_name.lower()):
+        # Labels
+        brset_df = pd.read_csv(labels_path)
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.jpg',''))
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.JPG',''))
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.png',''))
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.jpeg',''))
+        
+    elif dataset_name.lower() == 'eyepacs':
+        # Labels
+        brset_df = pd.read_csv(labels_path)
+        brset_df.rename(columns={'image':'image_id'}, inplace=True)
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.jpg',''))
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.JPG',''))
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.png',''))
+        brset_df['image_id'] = brset_df['image_id'].apply(lambda x: x.replace('.jpeg',''))
+        
 
     # Merge
     df = brset_df.merge(df, on='image_id')
@@ -199,18 +229,27 @@ def load_data(labels_path='data/labels.csv', backbone='dinov2_large', label='dia
     y = df[label]
     X = df.iloc[:, brset_df.shape[1]:]
     
-    if label == 'DR_ICDR':
-        pass
-        #0: Normal = 0
-        # 1, 2, 3 Non-proliferative = 1
-        # 4 Proliferative = 2
-        #y = y.apply(lambda x: 1 if x in (1, 2, 3) else (2 if x == 4 else 0))
-        
-    if label == 'diabetes':
-        y = y.apply(lambda x: 1 if x == 'yes' else 0)
-        
-    if label == 'patient_sex':
-        y = y.apply(lambda x: 0 if x == 2 else 1)
+    # Check if extra_labels is a list and not None
+    if extra_labels is not None and isinstance(extra_labels, list):
+        # Select the specified extra_labels columns from the DataFrame and append them to the features set (X)
+        extra_labels_df = df[extra_labels]
+        X = pd.concat([X, extra_labels_df], axis=1)
+    
+    if label in ['DR_ICDR', 'diagnosis', 'level']:
+        if DR_ICDR_3:
+            # 0: Normal = 0
+            # 1, 2, 3 Non-proliferative = 1
+            # 4 Proliferative = 2
+            y = y.apply(lambda x: 1 if x in (1, 2, 3) else (2 if x == 4 else 0))
+        else:
+            pass
+    
+    if dataset_name == 'BRSET':        
+        if label == 'diabetes':
+            y = y.apply(lambda x: 1 if x == 'yes' else 0)
+
+        if label == 'patient_sex':
+            y = y.apply(lambda x: 0 if x == 2 else 1) 
     
     return X, y
 
@@ -396,6 +435,7 @@ def test_model(X_test, y_test, model):
 
     # Predictions on test data
     y_pred = model.predict(X_test)
+    y_prob = model.predict_proba(X_test)
 
     # Confusion matrix
     # Create a confusion matrix of the test predictions
@@ -424,7 +464,7 @@ def test_model(X_test, y_test, model):
         #plt.plot(fpr,tpr)
         RocCurveDisplay.from_predictions(
                 y_test,
-                y_pred,
+                y_prob[:, 1],
                 name=f"ROC curve",
                 color='aqua',
                 ax=ax,
@@ -442,10 +482,11 @@ def test_model(X_test, y_test, model):
         for class_id, color in zip(range(len(label_binarizer.classes_)), colors):
             RocCurveDisplay.from_predictions(
                 y_onehot_test[:, class_id],
-                y_onehot_pred[:, class_id],
+                y_prob[:, class_id],
                 name=f"ROC curve for {label_binarizer.classes_[class_id]}",
                 color=color,
                 ax=ax,
+                
             )
 
         plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
