@@ -143,7 +143,7 @@ def test_model(y_test, y_pred, y_prob=None):
     return accuracy, precision, recall, f1
 
 
-def test(model, test_dataloader, saliency=True, device='cpu'):
+def test(model, test_dataloader, saliency=True, device='cpu', save=False):
 
     model.to(device)
     model.eval()
@@ -184,10 +184,16 @@ def test(model, test_dataloader, saliency=True, device='cpu'):
             predicted_class_indices = np.argmax(y_pred, axis=1)
             # Convert the predicted class indices to one-hot encoding
             y_pred_one_hot = np.eye(y_pred.shape[1])[predicted_class_indices]
+            
+        # If the output size is 2, then we just need the probabilities of the positive class
+        if (output_size == 2):
+            y_pred = y_pred[:, 1]
         
         test_model(y_true, y_pred_one_hot, y_pred)
     
     if saliency:
+        if save:
+            os.makedirs('saliency_maps', exist_ok=True)
         
         print('#' * 50, f' Saliency Maps ', '#' * 50)
         print('')
@@ -198,7 +204,7 @@ def test(model, test_dataloader, saliency=True, device='cpu'):
             eval_images = eval_images_per_class[img_class][:5]
 
             print(f'Class {img_class}:')
-
+            i = 0
             for eval_image in eval_images:
                 eval_image = eval_image.unsqueeze(0)  # Add batch dimension
                 saliency_map = get_saliency_map(model, eval_image)
@@ -214,5 +220,9 @@ def test(model, test_dataloader, saliency=True, device='cpu'):
                 plt.title('Saliency Map')
                 
                 plt.tight_layout()
+                if save:
+                    plt.savefig(f'saliency_maps/saliency_map_class_{img_class}_image_{i}.pdf')
+                    i+=1
+                    
                 plt.show()
 

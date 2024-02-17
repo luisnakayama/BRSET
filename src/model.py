@@ -315,13 +315,7 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
         else:
             self.norm = nn.BatchNorm1d(output_dim)
 
-        # Create a classifier on top of the backbone
-        if num_classes > 2:
-            self.classifier = nn.Linear(output_dim, num_classes)
-            #self.activation_f = nn.Softmax()
-        else:
-            self.classifier = nn.Linear(output_dim, 1)
-            #self.activation_f = nn.Sigmoid()
+        self.classifier = nn.Linear(output_dim, num_classes)
             
         # Set the mode
         self.mode = mode
