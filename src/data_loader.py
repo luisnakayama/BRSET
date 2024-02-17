@@ -23,7 +23,7 @@ class ImageFolderDataset(Dataset):
     - folder_path (str): The path to the folder containing the image files.
     - shape (tuple, optional): The desired shape for the images (height, width). Default is (224, 224).
     - transform (torchvision.transforms.Compose, optional): A composition of image transformations.
-      Default is a set of common transformations, including resizing and normalization.
+    -  Default is a set of common transformations, including resizing and normalization.
 
     Methods:
     - __len__(): Returns the total number of images in the dataset.
@@ -54,7 +54,7 @@ class ImageFolderDataset(Dataset):
         - folder_path (str): The path to the folder containing the image files.
         - shape (tuple, optional): The desired shape for the images (height, width). Default is (224, 224).
         - transform (torchvision.transforms.Compose, optional): A composition of image transformations.
-          Default is a set of common transformations, including resizing and normalization.
+        -  Default is a set of common transformations, including resizing and normalization.
         """
         self.folder_path = folder_path
         self.image_files = [f for f in os.listdir(folder_path) if f.lower().endswith(('jpg', 'jpeg', 'png', 'gif'))]
@@ -97,7 +97,7 @@ class BinaryBRSETDataset(Dataset):
     - dataframe (pandas.DataFrame): A DataFrame containing image filenames and associated labels.
     - shape (tuple, optional): The desired shape for the images (height, width). Default is (224, 224).
     - transform (torchvision.transforms.Compose, optional): A composition of image transformations.
-      Default is a set of common transformations, including resizing and normalization.
+    -  Default is a set of common transformations, including resizing and normalization.
     - label_col (str, optional): The name of the DataFrame column containing the labels. Default is 'diabetic_retinopathy'.
 
     Methods:
@@ -137,7 +137,7 @@ class BinaryBRSETDataset(Dataset):
         - dataframe (pandas.DataFrame): A DataFrame containing image filenames and associated labels.
         - shape (tuple, optional): The desired shape for the images (height, width). Default is (224, 224).
         - transform (torchvision.transforms.Compose, optional): A composition of image transformations.
-          Default is a set of common transformations, including resizing and normalization.
+        -  Default is a set of common transformations, including resizing and normalization.
         - label_col (str, optional): The name of the DataFrame column containing the labels. Default is 'diabetic_retinopathy'.
         """
         
@@ -293,3 +293,33 @@ class BRSETDataset(Dataset):
             'image': torch.FloatTensor(img),
             'labels': torch.FloatTensor(self.labels[idx])
         }
+        
+
+class SSLDataset(Dataset):
+
+    def __init__(self, df, image_cols, images_dir, shape=(224, 224), transform=None):
+
+        # Images
+        self.image_data = df[image_cols].values
+        self.images_dir = images_dir
+        self.shape = shape
+        self.transform = transform or transforms.Compose([
+            transforms.RandomResizedCrop(self.shape),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+        ])
+
+    def __len__(self):
+        return len(self.image_data)
+
+    def __getitem__(self, idx):
+
+        # Images:
+        img_path = self.image_data[idx]
+
+        img = Image.open( os.path.join(self.images_dir, img_path + '.jpg') ).convert("RGB")
+        img1 = self.transform(img)
+        img2 = self.transform(img)
+        
+
+        return img1, img2

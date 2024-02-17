@@ -367,3 +367,4 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
 
         return logits
     
+    
