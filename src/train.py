@@ -6,7 +6,7 @@ from tqdm import tqdm
 from sklearn.metrics import f1_score
 
 
-def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epochs=50, backbone='Retina', save=False, device='cpu', patience=5):
+def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epochs=50, backbone='Retina', save=False, device='cpu', patience=7):
     model.to(device)
 
     binary = True if train_dataloader.dataset.labels.shape[1] == 1 else False
