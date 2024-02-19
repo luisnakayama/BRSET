@@ -88,10 +88,15 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epo
         if epochs_no_improve >= patience:
             print('Early stopping triggered.')
             early_stop = True
+            
             break
 
     if not early_stop:
         print('Training completed without early stopping.')
+        
+    # Load best model
+    if best_model_info['state_dict'] is not None:
+        model.load_state_dict(best_model_info['state_dict'])
 
     if save:
         os.makedirs('Models', exist_ok=True)
