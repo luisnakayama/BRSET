@@ -7,6 +7,10 @@ import torch.nn as nn
 import subprocess
 import os
 from .RetFound import get_retfound
+from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
+from torchvision import models
+import torch.nn as nn
+
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -193,6 +197,24 @@ class FoundationalCVModel(torch.nn.Module):
         
         elif backbone == 'retfound':
             self.backbone = get_retfound(weights=weights, backbone=True)
+            
+        elif backbone in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152']:
+            # Select the ResNet model based on the 'backbone' parameter
+            resnet_models = {
+                'resnet18': models.resnet18,
+                'resnet34': models.resnet34,
+                'resnet50': models.resnet50,
+                'resnet101': models.resnet101,
+                'resnet152': models.resnet152,
+            }
+            
+            # Load the pretrained ResNet model
+            self.backbone = resnet_models[backbone](pretrained=True)
+            #backbone = resnet_models[backbone](pretrained=True)
+            
+            # Remove the fully connected layer to use the model as a feature extractor
+            self.backbone = nn.Sequential(*list(self.backbone.children())[:-1], nn.Flatten())
+            #backbone = nn.Sequential(*list(backbone.children())[:-1], nn.Flatten())
 
         else:
             raise ValueError(f"Unsupported backbone model: {backbone} \n Supported models: 'dinov2_small', 'dinov2_base', 'dinov2_large', 'dinov2_giant', 'convnextv2_tiny', 'convnextv2_base', 'convnextv2_large', 'convnext_tiny', 'convnext_small', 'convnext_base', 'convnext_large', 'swin_tiny', 'swin_small', 'swin_base', 'vit_base', 'vit_large', 'clip_base', 'clip_large', 'retfound'")
@@ -315,13 +337,7 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
         else:
             self.norm = nn.BatchNorm1d(output_dim)
 
-        # Create a classifier on top of the backbone
-        if num_classes > 2:
-            self.classifier = nn.Linear(output_dim, num_classes)
-            #self.activation_f = nn.Softmax()
-        else:
-            self.classifier = nn.Linear(output_dim, 1)
-            #self.activation_f = nn.Sigmoid()
+        self.classifier = nn.Linear(output_dim, num_classes)
             
         # Set the mode
         self.mode = mode
@@ -372,4 +388,5 @@ class FoundationalCVModelWithClassifier(torch.nn.Module):
         # probabilities = self.activation_f(logits)
 
         return logits
+    
     

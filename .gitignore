@@ -6,6 +6,8 @@
 Embeddings/*
 Models/*
 Weights/*
+Split/*
+*.pt
 
 # macOS system files
 .DS_Store

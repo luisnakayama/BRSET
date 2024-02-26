@@ -1,75 +1,63 @@
 import torch
 import torch.nn as nn
-
+import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.metrics import f1_score
 
 
-def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epochs=20, backbone='Retina', save=False, device='cpu'):
-
+def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epochs=50, backbone='Retina', save=False, device='cpu', patience=7):
     model.to(device)
 
     binary = True if train_dataloader.dataset.labels.shape[1] == 1 else False
-    
-    # Initialize lists to store loss values
+
     train_losses = []
     val_losses = []
     f1_scores = []
 
-    # Training loop
+    best_model_info = {
+        'epoch': 0,
+        'state_dict': None,
+        'f1_score': 0.0,
+    }
+    epochs_no_improve = 0
+    early_stop = False
+
     for epoch in range(num_epochs):
         model.train()
         total_loss = 0.0
         total_accuracy = 0.0
         num_train_batches = len(train_dataloader)
 
-        # Training phase
-        for batch in tqdm(train_dataloader,total=num_train_batches):
-
-            # Move inputs and labels to the GPU if available
+        for batch in tqdm(train_dataloader, total=num_train_batches):
             inputs = batch['image'].to(device)
             labels = batch['labels'].to(device)
 
-            # Calculate the outputs
+            optimizer.zero_grad()
             outputs = model(inputs)
-            # Calculate loss
+
             if binary:
                 loss = criterion(outputs, labels.float())
             else:
                 loss = criterion(outputs, torch.argmax(labels, dim=1))
-            # Backward pass
-            optimizer.zero_grad()
+
             loss.backward()
-            # Update weights
             optimizer.step()
-            
-            # Calculate accuracy
-            accuracy = (outputs.round() == labels).float().mean()
-            total_accuracy += accuracy.item()
+
             total_loss += loss.item()
 
-        avg_train_accuracy = total_accuracy / num_train_batches
         avg_train_loss = total_loss / num_train_batches
-
-        print(f'Epoch {epoch + 1}, Training Loss: {avg_train_loss}')
-        
         train_losses.append(avg_train_loss)
 
-        # Validation phase
         model.eval()
         val_loss = 0.0
-        val_accuracy = 0.0
-        num_val_batches = len(val_dataloader)
         all_preds = []
         all_labels = []
         with torch.no_grad():
-            for val_batch in tqdm(val_dataloader,total=num_val_batches):
-                # Move inputs and labels to the GPU if available
+            for val_batch in tqdm(val_dataloader, total=len(val_dataloader)):
                 val_inputs = val_batch['image'].to(device)
                 val_labels = val_batch['labels'].to(device)
 
-                # Calculate the outputs
                 val_outputs = model(val_inputs)
 
                 if binary:
@@ -77,46 +65,42 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, num_epo
                 else:
                     val_loss += criterion(val_outputs, torch.argmax(val_labels, dim=1)).item()
 
-                val_accuracy += (val_outputs.round() == val_labels).float().mean().item()
-                
-                preds = torch.argmax(val_outputs, dim=1)
+                preds = torch.argmax(val_outputs, dim=1) if not binary else val_outputs.round()
                 all_preds.extend(preds.cpu().numpy())
-                all_labels.extend(torch.argmax(val_labels, dim=1).cpu().numpy())
+                all_labels.extend(torch.argmax(val_labels, dim=1).cpu().numpy() if not binary else val_labels.cpu().numpy())
 
-        val_loss /= num_val_batches
-        val_accuracy /= num_val_batches
+        val_loss /= len(val_dataloader)
+        val_losses.append(val_loss)
 
         f1 = f1_score(all_labels, all_preds, average='macro')
         f1_scores.append(f1)
 
-        print(f'Epoch {epoch + 1}, Validation Loss: {val_loss}, F1 Score: {f1}')
+        print(f'Epoch {epoch + 1}, Train Loss: {avg_train_loss}, Val Loss: {val_loss}, F1 Score: {f1}')
 
-        val_losses.append(val_loss)
+        if f1 > best_model_info['f1_score']:
+            best_model_info['epoch'] = epoch + 1
+            best_model_info['state_dict'] = model.state_dict()
+            best_model_info['f1_score'] = f1
+            epochs_no_improve = 0
+        else:
+            epochs_no_improve += 1
 
-    # Plot the training and validation loss
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
-    plt.plot(train_losses, label='Training Loss', marker='o')
-    plt.plot(val_losses, label='Validation Loss', marker='o')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Training and Validation Loss')
-    plt.legend()
-    plt.grid()
+        if epochs_no_improve >= patience:
+            print('Early stopping triggered.')
+            early_stop = True
+            
+            break
 
-    plt.subplot(1, 2, 2)
-    plt.plot(f1_scores, label='F1 Score')
-    plt.xlabel('Epochs')
-    plt.ylabel('F1 Score')
-    plt.legend()
+    if not early_stop:
+        print('Training completed without early stopping.')
+        
+    # Load best model
+    if best_model_info['state_dict'] is not None:
+        model.load_state_dict(best_model_info['state_dict'])
 
-
-    plt.show()
-
-    print('Training finished.')
-
-    # Save the trained model if needed
     if save:
-        torch.save(model.state_dict(), f'Models/fine_tuned_{backbone}.pth')
+        os.makedirs('Models', exist_ok=True)
+        model.load_state_dict(best_model_info['state_dict'])
+        torch.save(model.state_dict(), f'Models/fine_tuned_{backbone}_best.pth')
 
     return model
